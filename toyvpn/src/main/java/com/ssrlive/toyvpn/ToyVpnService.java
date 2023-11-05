@@ -97,16 +97,6 @@ public class ToyVpnService extends VpnService {
     }
 
     private void connect() {
-        // Extract information from the shared preferences.
-        final SharedPreferences prefs = getSharedPreferences(ToyVpnClient.Prefs.NAME, MODE_PRIVATE);
-        final String server = prefs.getString(ToyVpnClient.Prefs.SERVER_ADDRESS, "");
-        final byte[] secret = prefs.getString(ToyVpnClient.Prefs.SHARED_SECRET, "").getBytes();
-        final boolean allow = prefs.getBoolean(ToyVpnClient.Prefs.ALLOW, true);
-        final Set<String> packages =
-                prefs.getStringSet(ToyVpnClient.Prefs.PACKAGES, Collections.emptySet());
-        final int port = prefs.getInt(ToyVpnClient.Prefs.SERVER_PORT, 0);
-        final String proxyHost = prefs.getString(ToyVpnClient.Prefs.PROXY_HOSTNAME, "");
-        final int proxyPort = prefs.getInt(ToyVpnClient.Prefs.PROXY_PORT, 0);
         startToyVpnRunnable(new ToyVpnRunnable(this));
     }
 
@@ -118,26 +108,23 @@ public class ToyVpnService extends VpnService {
         // Handler to mark as connected once onEstablish is called.
         runnable.setConfigureIntent(mConfigureIntent);
         runnable.setOnConnectListener(
-                new ToyVpnRunnable.OnConnectListener() {
-                    @Override
-                    public void onConnectStage(Stage stage) {
-                        switch (stage) {
-                            case taskLaunch:
-                                mHandler.sendEmptyMessage(R.string.launching);
-                                break;
-                            case connecting:
-                                mHandler.sendEmptyMessage(R.string.connecting);
-                                break;
-                            case establish:
-                                mHandler.sendEmptyMessage(R.string.connected);
-                                break;
-                            case disconnected:
-                                mHandler.sendEmptyMessage(R.string.disconnected);
-                                break;
-                            case taskTerminate:
-                                mHandler.sendEmptyMessage(R.string.ending);
-                                break;
-                        }
+                stage -> {
+                    switch (stage) {
+                        case taskLaunch:
+                            mHandler.sendEmptyMessage(R.string.launching);
+                            break;
+                        case connecting:
+                            mHandler.sendEmptyMessage(R.string.connecting);
+                            break;
+                        case establish:
+                            mHandler.sendEmptyMessage(R.string.connected);
+                            break;
+                        case disconnected:
+                            mHandler.sendEmptyMessage(R.string.disconnected);
+                            break;
+                        case taskTerminate:
+                            mHandler.sendEmptyMessage(R.string.ending);
+                            break;
                     }
                 });
         thread.start();
