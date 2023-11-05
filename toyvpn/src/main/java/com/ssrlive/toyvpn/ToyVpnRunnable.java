@@ -135,48 +135,6 @@ public class ToyVpnRunnable implements Runnable {
 
     @Override
     public void run() {
-        try {
-            Log.i(getTag(), "Thread starting");
-            synchronized (mService) {
-                if (mOnConnectListener != null) {
-                    mOnConnectListener.onConnectStage(OnConnectListener.Stage.taskLaunch);
-                }
-            }
-
-            // If anything needs to be obtained using the network, get it now.
-            // This greatly reduces the complexity of seamless handover, which
-            // tries to recreate the tunnel without shutting down everything.
-            // In this demo, all we need to know is the server address.
-            final SocketAddress serverAddress = new InetSocketAddress(mServerName, mServerPort);
-
-            // We try to create the tunnel several times.
-            // TODO: The better way is to work with ConnectivityManager, trying only when the
-            //       network is available.
-            // Here we just use a counter to keep things simple.
-            for (int attempt = 0; attempt < 10; ++attempt) {
-                // Reset the counter if we were connected.
-                if (run(serverAddress)) {
-                    attempt = 0;
-                }
-
-                // Sleep for a while. This also checks if we got interrupted.
-                Thread.sleep(3000);
-            }
-            Log.i(getTag(), "Giving up");
-        } catch (InterruptedException | IllegalArgumentException | IllegalStateException e) {
-            Log.e(getTag(), "Connection failed, exiting", e);
-        } finally {
-            Log.i(getTag(), "Thread dying");
-            synchronized (mService) {
-                if (mOnConnectListener != null) {
-                    mOnConnectListener.onConnectStage(OnConnectListener.Stage.taskTerminate);
-                }
-            }
-        }
-    }
-
-    private boolean run(SocketAddress server)
-            throws InterruptedException, IllegalArgumentException, IllegalStateException {
         DatagramChannel tunnel = null;
         ParcelFileDescriptor iface = null;
 
@@ -191,9 +149,7 @@ public class ToyVpnRunnable implements Runnable {
             tunnel = DatagramChannel.open();
 
             // Protect the tunnel before connecting to avoid loopback.
-            if (!mService.protect(tunnel.socket())) {
-                throw new IllegalStateException("Cannot protect the tunnel");
-            }
+
 
             // Connect to the server.
             // tunnel.connect(server);
@@ -273,7 +229,6 @@ public class ToyVpnRunnable implements Runnable {
                 Log.e(getTag(), "Unable to close interface", e);
             }
         }
-        return true;
     }
 
     private ParcelFileDescriptor configureVirtualInterface()
