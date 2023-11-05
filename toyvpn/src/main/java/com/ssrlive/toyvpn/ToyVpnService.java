@@ -119,9 +119,6 @@ public class ToyVpnService extends VpnService {
                         case establish:
                             mHandler.sendEmptyMessage(R.string.connected);
                             break;
-                        case disconnected:
-                            mHandler.sendEmptyMessage(R.string.disconnected);
-                            break;
                         case taskTerminate:
                             mHandler.sendEmptyMessage(R.string.ending);
                             break;

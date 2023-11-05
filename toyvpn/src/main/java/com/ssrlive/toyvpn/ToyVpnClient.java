@@ -61,27 +61,6 @@ public class ToyVpnClient extends Activity {
         return new Intent(this, ToyVpnService.class);
     }
 
-    private boolean checkProxyConfigs(String proxyHost, String proxyPort) {
-        final boolean hasIncompleteProxyConfigs = proxyHost.isEmpty() != proxyPort.isEmpty();
-        if (hasIncompleteProxyConfigs) {
-            Toast.makeText(this, R.string.incomplete_proxy_settings, Toast.LENGTH_SHORT).show();
-        }
-        return !hasIncompleteProxyConfigs;
-    }
-
-    @TargetApi(Build.VERSION_CODES.N)
-    private boolean checkPackages(Set<String> packageNames) {
-        final boolean hasCorrectPackageNames = packageNames.isEmpty() ||
-                getPackageManager().getInstalledPackages(0).stream()
-                        .map(pi -> pi.packageName)
-                        .collect(Collectors.toSet())
-                        .containsAll(packageNames);
-        if (!hasCorrectPackageNames) {
-            Toast.makeText(this, R.string.unknown_package_names, Toast.LENGTH_SHORT).show();
-        }
-        return hasCorrectPackageNames;
-    }
-
     @Override
     protected void onActivityResult(int request, int result, Intent data) {
         if (result == RESULT_OK) {

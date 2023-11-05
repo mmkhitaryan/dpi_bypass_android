@@ -46,7 +46,7 @@ public class ToyVpnRunnable implements Runnable {
      */
     public interface OnConnectListener {
         public enum Stage {
-            taskLaunch, connecting, establish, disconnected, taskTerminate;
+            taskLaunch, connecting, establish, taskTerminate;
         }
         void onConnectStage(Stage stage);
     }
@@ -103,7 +103,7 @@ public class ToyVpnRunnable implements Runnable {
 
             // We keep forwarding packets till something goes wrong.
             //noinspection InfiniteLoopStatement
-            while (true) {
+            while (!Thread.currentThread().isInterrupted()) {
                 // Read the outgoing packet from the input stream (Virtual Interface).
                 int length = ifaceIn.read(packet.array());
 
@@ -119,7 +119,7 @@ public class ToyVpnRunnable implements Runnable {
 
             synchronized (mService) {
                 if (mOnConnectListener != null) {
-                    mOnConnectListener.onConnectStage(OnConnectListener.Stage.disconnected);
+                    mOnConnectListener.onConnectStage(OnConnectListener.Stage.taskTerminate);
                 }
             }
 
