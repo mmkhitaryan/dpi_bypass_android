@@ -107,9 +107,7 @@ public class ToyVpnService extends VpnService {
         final int port = prefs.getInt(ToyVpnClient.Prefs.SERVER_PORT, 0);
         final String proxyHost = prefs.getString(ToyVpnClient.Prefs.PROXY_HOSTNAME, "");
         final int proxyPort = prefs.getInt(ToyVpnClient.Prefs.PROXY_PORT, 0);
-        startToyVpnRunnable(new ToyVpnRunnable(
-                this, mNextConnectionId.getAndIncrement(), server, port, secret,
-                proxyHost, proxyPort, allow, packages));
+        startToyVpnRunnable(new ToyVpnRunnable(this));
     }
 
     private void startToyVpnRunnable(final ToyVpnRunnable runnable) {

@@ -51,75 +51,14 @@ public class ToyVpnRunnable implements Runnable {
         void onConnectStage(Stage stage);
     }
 
-    /** Maximum packet size is constrained by the MTU, which is given as a signed short. */
     private static final int MAX_PACKET_SIZE = Short.MAX_VALUE;
-
-    /** Time to wait in between losing the connection and retrying. */
-    private static final long RECONNECT_WAIT_MS = TimeUnit.SECONDS.toMillis(3);
-
-    /** Time between keepalives if there is no traffic at the moment.
-     *
-     * TODO: don't do this; it's much better to let the connection die and then reconnect when
-     *       necessary instead of keeping the network hardware up for hours on end in between.
-     **/
-    private static final long KEEPALIVE_INTERVAL_MS = TimeUnit.SECONDS.toMillis(15);
-
-    /** Time to wait without receiving any response before assuming the server is gone. */
-    private static final long RECEIVE_TIMEOUT_MS = KEEPALIVE_INTERVAL_MS * 3;
-
-    /**
-     * Time between polling the VPN interface for new traffic, since it's non-blocking.
-     *
-     * TODO: really don't do this; a blocking read on another thread is much cleaner.
-     */
-    private static final long IDLE_INTERVAL_MS = TimeUnit.MILLISECONDS.toMillis(100);
-
-    /**
-     * Number of periods of length {@IDLE_INTERVAL_MS} to wait before declaring the handshake a
-     * complete and abject failure.
-     *
-     * TODO: use a higher-level protocol; hand-rolling is a fun but pointless exercise.
-     */
-    private static final int MAX_HANDSHAKE_ATTEMPTS = 50;
-
     private final VpnService mService;
-    private final int mConnectionId;
-
-    private final String mServerName;
-    private final int mServerPort;
-    private final byte[] mSharedSecret;
-
     private PendingIntent mConfigureIntent;
     private OnConnectListener mOnConnectListener;
 
-    // Proxy settings
-    private String mProxyHostName;
-    private int mProxyHostPort;
 
-    // Allowed/Disallowed packages for VPN usage
-    private final boolean mAllow;
-    private final Set<String> mPackages;
-
-    public ToyVpnRunnable(final VpnService service, final int connectionId,
-                          final String serverName, final int serverPort, final byte[] sharedSecret,
-                          final String proxyHostName, final int proxyHostPort, boolean allow,
-                          final Set<String> packages) {
+    public ToyVpnRunnable(final VpnService service) {
         mService = service;
-        mConnectionId = connectionId;
-
-        mServerName = serverName;
-        mServerPort= serverPort;
-        mSharedSecret = sharedSecret;
-
-        if (!TextUtils.isEmpty(proxyHostName)) {
-            mProxyHostName = proxyHostName;
-        }
-        if (proxyHostPort > 0) {
-            // The port value is always an integer due to the configured inputType.
-            mProxyHostPort = proxyHostPort;
-        }
-        mAllow = allow;
-        mPackages = packages;
     }
 
     /**
@@ -135,7 +74,6 @@ public class ToyVpnRunnable implements Runnable {
 
     @Override
     public void run() {
-        DatagramChannel tunnel = null;
         ParcelFileDescriptor iface = null;
 
         try {
@@ -145,21 +83,6 @@ public class ToyVpnRunnable implements Runnable {
                 }
             }
 
-            // Create a DatagramChannel as the VPN tunnel.
-            tunnel = DatagramChannel.open();
-
-            // Protect the tunnel before connecting to avoid loopback.
-
-
-            // Connect to the server.
-            // tunnel.connect(server);
-
-            // For simplicity, we use the same thread for both reading and
-            // writing. Here we put the tunnel into non-blocking mode.
-            // tunnel.configureBlocking(false);
-
-            // Authenticate with server and configure the virtual network interface.
-            // String parameters = handshakeServer(tunnel);
             iface = configureVirtualInterface();
 
             synchronized (mService) {
@@ -181,31 +104,14 @@ public class ToyVpnRunnable implements Runnable {
             // We keep forwarding packets till something goes wrong.
             //noinspection InfiniteLoopStatement
             while (true) {
-                // Assume that we did not make any progress in this iteration.
-
                 // Read the outgoing packet from the input stream (Virtual Interface).
                 int length = ifaceIn.read(packet.array());
 
-                StringBuilder hexString = new StringBuilder();
-                for (byte b : packet.array()) {
-                    hexString.append(String.format("%02X ", b)); // Convert each byte to a two-character hexadecimal representation
-                }
-
-                String logMessage = hexString.toString();
-                Log.i("YourTag", logMessage);
-
-                if (length > 0) {
-                    // Write the outgoing packet to the tunnel (server).
-                    packet.limit(length);
-//                     tunnel.write(packet);
+                if (length > 0) { // TODO: Is it even possible for a packet to be 0 bytes??
+                    // Here I need to implement the packet manipulations for DPI bypass
+                    ifaceOut.write(packet.array(), 0, length);
                     packet.clear();
-
-                    // There might be more outgoing packets.
                 }
-
-                ifaceOut.write(packet.array(), 0, length);
-
-
             }
         } catch (IOException e) {
             Log.e(getTag(), "Cannot use socket", e);
@@ -220,10 +126,6 @@ public class ToyVpnRunnable implements Runnable {
             try {
                 if (iface != null) {
                     iface.close();
-                }
-                if (tunnel != null) {
-                    tunnel.disconnect();
-                    tunnel.close();
                 }
             } catch (Exception e) {
                 Log.e(getTag(), "Unable to close interface", e);
@@ -255,6 +157,6 @@ public class ToyVpnRunnable implements Runnable {
     }
 
     private String getTag() {
-        return ToyVpnRunnable.class.getSimpleName() + "[" + mConnectionId + "]";
+        return ToyVpnRunnable.class.getSimpleName();
     }
 }
