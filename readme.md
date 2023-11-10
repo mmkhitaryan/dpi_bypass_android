@@ -1,4 +1,4 @@
-I took ToyVPN as template to create IP packet interceptor, which will do packet manipulations to achieve DPI bypass without root access.
+I took ToyVPN as a template to create IP packet interceptor, which will do packet manipulations to achieve DPI bypass without root access.
 
 The project is blocked because I need to understand how to implement packet interception like (pcapdroid)[https://github.com/emanuele-f/PCAPdroid].
 ```
@@ -17,4 +17,4 @@ I get IP packets into the 'packet' variable. The problem is that VPN must send t
 
 To send IP packets directly, you must use raw sockets which require root access.
 
-I need to dig into apps like pcapdroid to understand how they avoid making socket connection to remote server.
+I need to dig into apps like pcapdroid to understand how they avoid making socket connections to remote server.
